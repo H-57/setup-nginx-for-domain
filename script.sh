@@ -6,6 +6,22 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
+# Check if Nginx is installed, if not install it
+if ! command -v nginx &> /dev/null
+then
+    echo "Nginx is not installed. Installing Nginx..."
+    apt update
+    apt install -y nginx
+    systemctl start nginx
+    systemctl enable nginx
+    echo "Nginx installed and started."
+else
+    echo "Nginx is already installed."
+fi
+
+# Rest of your original script goes here
+# ...
+
 # Prompt for domain name
 read -p "Enter the domain name: " domain
 
