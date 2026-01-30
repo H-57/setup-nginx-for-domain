@@ -2,13 +2,12 @@
 
 # Check if the script is run with sudo
 if [[ $EUID -ne 0 ]]; then
-   echo "This script must be run with sudo." 
+   echo "This script must be run with sudo."
    exit 1
 fi
 
 # Check if Nginx is installed, if not install it
-if ! command -v nginx &> /dev/null
-then
+if ! command -v nginx &> /dev/null; then
     echo "Nginx is not installed. Installing Nginx..."
     apt update
     apt install -y nginx
@@ -19,14 +18,14 @@ else
     echo "Nginx is already installed."
 fi
 
-# Rest of your original script goes here
-# ...
-
 # Prompt for domain name
 read -p "Enter the domain name: " domain
 
-# Prompt for source (proxy_pass)
-read -p "Enter the source (proxy_pass, e.g., http://localhost:3000): " proxy_pass
+# Prompt for port only
+read -p "Enter the port number (e.g., 3000): " port
+
+# Build proxy_pass automatically
+proxy_pass="http://localhost:$port"
 
 # Create the configuration file
 config_file="/etc/nginx/sites-available/$domain"
@@ -35,6 +34,7 @@ cat > "$config_file" <<EOL
 server {
     listen 80;
     server_name $domain;
+
     location / {
         proxy_pass $proxy_pass;
         proxy_http_version 1.1;
@@ -48,15 +48,10 @@ EOL
 
 echo "Configuration file created: $config_file"
 
-# Create a symbolic link in the sites-enabled directory
+# Enable site
 ln -s "$config_file" "/etc/nginx/sites-enabled/$domain"
 
-echo "Symbolic link created in sites-enabled directory."
-
-# Test the Nginx configuration
-nginx -t
-
-# Reload Nginx
-systemctl reload nginx
+# Test & reload
+nginx -t && systemctl reload nginx
 
 echo "Nginx configuration reloaded."
